@@ -2,11 +2,6 @@
 Tello EDU Real-Time Everyday Object Detector (PyTorch MobileNetV3 SSDLite)
 Streams live video feed from Tello drone, detects everyday objects (ball, bottle, cup, phone, book, laptop, chair, etc.),
 draws bounding boxes and labels on HUD, and logs detections.
-
-Controls:
-  's' - Save snapshot of detected objects
-  'f' - Launch hover flight sequence
-  'q' or ESC - Exit
 """
 
 import os
@@ -14,10 +9,14 @@ import cv2
 import time
 import threading
 from datetime import datetime
-from tello import Tello
-from real_time_object_detector import RealTimeObjectDetector
 
-# Global state
+try:
+    from src.drone.tello import Tello
+    from src.detection.real_time_object_detector import RealTimeObjectDetector
+except ImportError:
+    from tello import Tello
+    from real_time_object_detector import RealTimeObjectDetector
+
 latest_frame = None
 annotated_frame = None
 keep_running = True
@@ -31,7 +30,7 @@ def inference_worker(detector):
             ann, detections = detector.detect_frame(frame_copy)
             annotated_frame = ann
             current_detections = detections
-        time.sleep(0.05)  # ~20 FPS inference loop
+        time.sleep(0.05)
 
 def video_worker(video_url):
     global latest_frame, keep_running
@@ -50,11 +49,9 @@ def main():
     os.makedirs('object_detections', exist_ok=True)
     print("=== Tello EDU Everyday Object Detector (PyTorch MobileNetV3 SSDLite) ===")
 
-    # 1. Initialize Detector
     detector = RealTimeObjectDetector(confidence_threshold=0.45)
-
-    # 2. Connect to Tello Drone
     drone = Tello()
+    
     if not drone.send_command('command'):
         print("!! Could not connect to Tello. Verify Wi-Fi network TELLO-XXXXXX.")
         drone.close()
@@ -64,7 +61,6 @@ def main():
     time.sleep(1.5)
     video_url = "udp://0.0.0.0:11111?overrun_nonfatal=1&fifo_size=5000000"
     
-    # 3. Start Video & Inference Worker Threads
     v_thread = threading.Thread(target=video_worker, args=(video_url,))
     v_thread.daemon = True
     v_thread.start()
@@ -80,7 +76,6 @@ def main():
         while keep_running:
             display_frame = annotated_frame if annotated_frame is not None else latest_frame
             if display_frame is not None:
-                # Draw top status bar
                 hud = display_frame.copy()
                 cv2.rectangle(hud, (0, 0), (hud.shape[1], 45), (20, 20, 20), -1)
                 det_summary = ", ".join([f"{d['label'].upper()} ({int(d['score']*100)}%)" for d in current_detections[:3]])

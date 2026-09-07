@@ -8,7 +8,11 @@ import time
 import torch
 import numpy as np
 from torchvision import datasets, transforms
-from room_classifier import RoomClassifier
+
+try:
+    from src.classification.room_classifier import RoomClassifier
+except ImportError:
+    from room_classifier import RoomClassifier
 
 def evaluate(model_path="models/room_model.pth", data_dir="dataset/val"):
     if not os.path.exists(model_path):
@@ -18,7 +22,6 @@ def evaluate(model_path="models/room_model.pth", data_dir="dataset/val"):
     classifier = RoomClassifier(model_path=model_path)
     device = classifier.device
 
-    # Data transformation for validation
     val_transform = transforms.Compose([
         transforms.Resize(256),
         transforms.CenterCrop(224),
@@ -38,8 +41,6 @@ def evaluate(model_path="models/room_model.pth", data_dir="dataset/val"):
     total = 0
     all_preds = []
     all_labels = []
-
-    # Latency tracking
     latencies = []
 
     classifier.model.eval()
@@ -69,7 +70,6 @@ def evaluate(model_path="models/room_model.pth", data_dir="dataset/val"):
     print(f"Average Inference Latency : {avg_latency_ms:.2f} ms ({fps:.1f} FPS)")
     print(f"=" * 50)
 
-    # Per-Class Accuracy & Metrics
     all_preds = np.array(all_preds)
     all_labels = np.array(all_labels)
 

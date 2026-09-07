@@ -1,7 +1,11 @@
 import socket
 import threading
 import time
-from stats import Stats
+
+try:
+    from src.drone.stats import Stats
+except ImportError:
+    from stats import Stats
 
 class Tello(object):
     """
@@ -82,4 +86,3 @@ class Tello(object):
 
     def close(self):
         self.socket.close()
-

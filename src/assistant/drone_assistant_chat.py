@@ -13,9 +13,17 @@ import os
 import cv2
 import time
 import threading
-from command_parser import parse_command
-from autonomous_tracker import AutonomousTracker
-from real_time_object_detector import RealTimeObjectDetector
+
+try:
+    from src.assistant.command_parser import parse_command
+    from src.assistant.autonomous_tracker import AutonomousTracker
+    from src.detection.real_time_object_detector import RealTimeObjectDetector
+    from src.drone.tello import Tello
+except ImportError:
+    from command_parser import parse_command
+    from autonomous_tracker import AutonomousTracker
+    from real_time_object_detector import RealTimeObjectDetector
+    from tello import Tello
 
 # Global State
 latest_frame = None
@@ -80,9 +88,6 @@ def draw_assistant_hud(frame, hud_info, current_detections):
     return hud
 
 def terminal_chat_thread(tracker, drone_inst):
-    """
-    Interactive background thread for typing natural language prompts in terminal.
-    """
     global keep_running
     print("\n=======================================================")
     print("       TELLO AI ASSISTANT TERMINAL CHAT ONLINE         ")
@@ -173,13 +178,10 @@ def main():
     
     print("=== Launching Tello Vision-Guided Assistant ===")
     
-    # 1. Load Object Detector & Autonomous Tracker
     detector = RealTimeObjectDetector(confidence_threshold=0.40)
     tracker = AutonomousTracker()
 
-    # 2. Check Connection Mode (Drone vs Webcam simulation)
     video_source = 0
-    from tello import Tello
     drone = Tello()
     
     if drone.send_command('command'):
@@ -195,12 +197,10 @@ def main():
         use_webcam = True
         video_source = 0
 
-    # 3. Start Terminal Chat Thread
     c_thread = threading.Thread(target=terminal_chat_thread, args=(tracker, drone))
     c_thread.daemon = True
     c_thread.start()
 
-    # 4. Run Main Video Stream & Control Loop
     try:
         video_stream_loop(video_source, detector, tracker, drone)
     finally:

@@ -1,25 +1,15 @@
 """
 Interactive Text CLI Controller for Tello Drone
 Allows typing natural commands to interactively control the drone in real-time.
-
-Supported Commands:
-  - 'takeoff' or 'start'   : Take off and hover
-  - 'up'                   : Move UP 30 cm (or 'up 50' for custom distance)
-  - 'down'                 : Move DOWN 30 cm (or 'down 50')
-  - 'forward' or 'f'       : Move FORWARD 30 cm
-  - 'back' or 'b'          : Move BACKWARD 30 cm
-  - 'left' or 'l'          : Move LEFT 30 cm
-  - 'right' or 'r'         : Move RIGHT 30 cm
-  - 'turn left' / 'ccw'    : Rotate COUNTER-CLOCKWISE 45 deg
-  - 'turn right' / 'cw'    : Rotate CLOCKWISE 45 deg
-  - 'land'                 : Land drone safely
-  - 'battery'              : Print current battery level
-  - 'quit' or 'exit'       : Land and quit interface
 """
 
 import sys
 import time
-from tello import Tello
+
+try:
+    from src.drone.tello import Tello
+except ImportError:
+    from tello import Tello
 
 DEFAULT_STEP_CM = 30
 
@@ -55,53 +45,39 @@ def process_command(drone, cmd_str):
 
     if first_word in ['help', 'h', '?']:
         print_help()
-
     elif first_word in ['takeoff', 'start', 'launch']:
         drone.send_command('takeoff')
-
     elif first_word in ['land', 'stop']:
         drone.send_command('land')
-
     elif first_word == 'up':
         dist = tokens[1] if len(tokens) > 1 and tokens[1].isdigit() else str(DEFAULT_STEP_CM)
         drone.send_command(f'up {dist}')
-
     elif first_word in ['down', 'dn']:
         dist = tokens[1] if len(tokens) > 1 and tokens[1].isdigit() else str(DEFAULT_STEP_CM)
         drone.send_command(f'down {dist}')
-
     elif first_word in ['forward', 'f', 'front']:
         dist = tokens[1] if len(tokens) > 1 and tokens[1].isdigit() else str(DEFAULT_STEP_CM)
         drone.send_command(f'forward {dist}')
-
     elif first_word in ['back', 'b', 'backward']:
         dist = tokens[1] if len(tokens) > 1 and tokens[1].isdigit() else str(DEFAULT_STEP_CM)
         drone.send_command(f'back {dist}')
-
     elif first_word in ['left', 'l']:
         dist = tokens[1] if len(tokens) > 1 and tokens[1].isdigit() else str(DEFAULT_STEP_CM)
         drone.send_command(f'left {dist}')
-
     elif first_word in ['right', 'r']:
         dist = tokens[1] if len(tokens) > 1 and tokens[1].isdigit() else str(DEFAULT_STEP_CM)
         drone.send_command(f'right {dist}')
-
     elif cmd in ['turn left', 'ccw']:
         drone.send_command('ccw 45')
-
     elif cmd in ['turn right', 'cw']:
         drone.send_command('cw 45')
-
     elif first_word in ['battery', 'bat']:
         drone.send_command('battery?')
-
     elif first_word in ['quit', 'exit', 'q']:
         print(">> Exiting controller... Landing drone for safety.")
         drone.send_command('land')
         return False
-
     else:
-        # Fallback: Send raw SDK command if recognized
         print(f">> Sending custom raw SDK command: '{cmd}'")
         drone.send_command(cmd)
 
