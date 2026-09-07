@@ -1,0 +1,12 @@
+command
+takeoff
+delay 5
+left 50
+delay 3
+right 50
+delay 3
+up 50
+delay 3
+down 50
+delay 3
+land

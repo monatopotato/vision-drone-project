@@ -1,0 +1,30 @@
+# Python Bytecode & Cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Environments & IDEs
+.venv/
+venv/
+ENV/
+.vscode/
+.idea/
+
+# Datasets & Temp Files
+dataset/
+dataset_objects/
+dataset_temp/
+room_detections/
+object_detections/
+*.tar.gz
+*.zip
+
+# PyTorch Checkpoint Binaries (larger model files)
+models/*.pth
+!models/.gitkeep
+
+# System & Logs
+*.log
+.DS_Store
+Thumbs.db
