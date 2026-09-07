@@ -9,17 +9,17 @@ import sys
 def main():
     print("""
 ======================================================
-  🛸 VISION-GUIDED TELLO DRONE PROJECT LAUNCHER 🛸
+     VISION-GUIDED TELLO DRONE PROJECT LAUNCHER
 ======================================================
 Select a mode to run:
 
-  [1] 🤖 Launch AI Vision Chat Assistant (Terminal Chat + Vision Tracking)
-  [2] 🎯 Launch Real-Time Object Bounding-Box Detector (PyTorch MobileNetV3 SSDLite)
-  [3] 💻 Test Object Detector on PC Webcam (No Drone Required)
-  [4] 🎮 Launch Interactive Text CLI Drone Controller
-  [5] ✈️  Run Up-Down 2 Seconds Flight Test
-  [6] 🏠 Run Room Classification Model Evaluation
-  [0] ❌ Exit
+  [1] Launch AI Vision Chat Assistant (Terminal Chat + Vision Tracking)
+  [2] Launch Real-Time Object Bounding-Box Detector (PyTorch MobileNetV3 SSDLite)
+  [3] Test Object Detector on PC Webcam (No Drone Required)
+  [4] Launch Interactive Text CLI Drone Controller
+  [5] Run Up-Down 2 Seconds Flight Test
+  [6] Run Room Classification Model Evaluation
+  [0] Exit
 ======================================================
 """)
     choice = input("Enter choice [0-6] > ").strip()

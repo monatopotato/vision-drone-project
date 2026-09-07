@@ -6,57 +6,57 @@ Takes off, ascends vertically for 2 seconds, descends back down, and lands safel
 import time
 
 try:
-    from src.drone.tello import Tello
+ from src.drone.tello import Tello
 except ImportError:
-    from tello import Tello
+ from tello import Tello
 
 def fly_up_down():
-    print("=== Tello Drone: Up 2 Seconds Flight Sequence ===")
-    drone = Tello()
-    
-    try:
-        if not drone.send_command('command'):
-            print("!! Failed to communicate with Tello. Make sure you are connected to the drone's Wi-Fi network.")
-            return
+ print("=== Tello Drone: Up 2 Seconds Flight Sequence ===")
+ drone = Tello()
 
-        print(">> Connected to Tello.")
-        time.sleep(1)
+ try:
+ if not drone.send_command('command'):
+ print("!! Failed to communicate with Tello. Make sure you are connected to the drone's Wi-Fi network.")
+ return
 
-        print("\n>> 1. Taking off...")
-        drone.send_command('takeoff')
-        time.sleep(4)
+ print(">> Connected to Tello.")
+ time.sleep(1)
 
-        print(">> 2. Ascending UP for 2 seconds...")
-        drone.send_command('rc 0 0 35 0')
-        time.sleep(2.0)
+ print("\n>> 1. Taking off...")
+ drone.send_command('takeoff')
+ time.sleep(4)
 
-        drone.send_command('rc 0 0 0 0')
-        time.sleep(1)
+ print(">> 2. Ascending UP for 2 seconds...")
+ drone.send_command('rc 0 0 35 0')
+ time.sleep(2.0)
 
-        print(">> 3. Descending DOWN for 2 seconds...")
-        drone.send_command('rc 0 0 -35 0')
-        time.sleep(2.0)
+ drone.send_command('rc 0 0 0 0')
+ time.sleep(1)
 
-        drone.send_command('rc 0 0 0 0')
-        time.sleep(1)
+ print(">> 3. Descending DOWN for 2 seconds...")
+ drone.send_command('rc 0 0 -35 0')
+ time.sleep(2.0)
 
-        print(">> 4. Landing...")
-        drone.send_command('land')
-        print(">> Flight Sequence Completed Successfully!")
+ drone.send_command('rc 0 0 0 0')
+ time.sleep(1)
 
-    except KeyboardInterrupt:
-        print("\n!! Emergency Interrupt! Initiating landing...")
-        drone.send_command('rc 0 0 0 0')
-        drone.send_command('land')
+ print(">> 4. Landing...")
+ drone.send_command('land')
+ print(">> Flight Sequence Completed Successfully!")
 
-    except Exception as e:
-        print(f"!! Error occurred: {e}")
-        drone.send_command('rc 0 0 0 0')
-        drone.send_command('land')
+ except KeyboardInterrupt:
+ print("\n!! Emergency Interrupt! Initiating landing...")
+ drone.send_command('rc 0 0 0 0')
+ drone.send_command('land')
 
-    finally:
-        drone.close()
-        print("=== Connection Closed ===")
+ except Exception as e:
+ print(f"!! Error occurred: {e}")
+ drone.send_command('rc 0 0 0 0')
+ drone.send_command('land')
+
+ finally:
+ drone.close()
+ print("=== Connection Closed ===")
 
 if __name__ == '__main__':
-    fly_up_down()
+ fly_up_down()
