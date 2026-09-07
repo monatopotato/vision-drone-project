@@ -1,12 +1,13 @@
 # Autonomous Vision-Guided Tello Drone Assistant
 
-An AI-powered autonomous flight and object detection system for Ryze / DJI Tello EDU drones. Powered by **PyTorch MobileNetV3 SSDLite**, real-time visual servoing, and a natural language terminal chat assistant.
+An AI-powered autonomous flight and object detection system for Ryze / DJI Tello EDU drones. Powered by **PyTorch MobileNetV3 SSDLite**, real-time visual servoing, speech recognition voice commands, and a natural language chat assistant.
 
 ---
 
 ## Key Features
 
-- **Natural Language Chat Assistant**: Type natural instructions in terminal (e.g. *"go to a ball and hover above it"*, *"once you go to a computer, land"*).
+- **Voice Command Microphone Control**: Hands-free voice speech commands (e.g. *"go to a ball and hover above it"*, *"once you go to a computer, land"*, *"takeoff"*, *"land"*).
+- **Natural Language Chat Assistant**: Natural text or voice intent parser mapping spoken words to autonomous drone missions.
 - **Real-Time Bounding-Box Object Detection**: Powered by **PyTorch MobileNetV3 SSDLite** pre-trained on COCO everyday objects (**sports ball**, **laptop/computer**, **bottle**, **cup**, **cell phone**, **chair**, **book**, etc.) running at **30–60+ FPS on CPU**.
 - **Visual Servoing & Centering Loop**: Aligns drone heading (yaw) and altitude while monitoring bounding-box area ratios ($A_{box} / A_{frame}$) to navigate autonomously toward target objects.
 - **High-Accuracy Room Classification**: MobileNetV3 transfer learning model fine-tuned for indoor room recognition with **88.78%+ validation accuracy** and **12.27 ms/frame** latency.
@@ -20,8 +21,9 @@ An AI-powered autonomous flight and object detection system for Ryze / DJI Tello
 vision-drone-project/
 ├── main.py                       # Interactive Project Launcher
 ├── src/                          # Modular Source Code
-│   ├── assistant/                # Autonomous Chat Assistant & Visual Servoing
+│   ├── assistant/                # Autonomous Voice & Text Chat Assistant & Visual Servoing
 │   │   ├── drone_assistant_chat.py
+│   │   ├── voice_listener.py
 │   │   ├── command_parser.py
 │   │   └── autonomous_tracker.py
 │   ├── detection/                # PyTorch MobileNetV3 Object Detection
@@ -60,7 +62,7 @@ vision-drone-project/
 git clone https://github.com/monatopotato/vision-drone-project.git
 cd vision-drone-project
 
-# 2. Install Dependencies
+# 2. Install Dependencies (including SpeechRecognition & PyAudio)
 pip install -r requirements.txt
 
 # 3. Launch Interactive Menu
@@ -71,7 +73,7 @@ python main.py
 
 ## Quick Commands
 
-- **Run AI Assistant**: `python -m src.assistant.drone_assistant_chat`
+- **Run Voice Microphone Assistant**: Select `[1]` in `main.py` or run `python -m src.assistant.drone_assistant_chat`
 - **Run Object Bounding-Box Detector**: `python -m src.detection.drone_object_detector_ssd`
 - **Test Webcam Detector**: `python -m src.detection.real_time_object_detector`
 - **Run Text Flight CLI**: `python -m src.cli.interactive_drone_cli`
