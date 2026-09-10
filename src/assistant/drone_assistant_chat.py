@@ -1,12 +1,12 @@
 """
-Autonomous AI Drone Assistant with Voice Commands & Terminal Natural Language Chat
-Commands Examples (Voice or Typing):
+Autonomous AI Drone Assistant with Terminal Natural Language Chat & Vision Tracking
+Commands Example:
   - "go to a ball and hover above it"
   - "once you go to a computer, land"
   - "find a bottle and hover"
   - "land" / "takeoff" / "exit"
 
-Supports Voice Microphone Control, Terminal Chat Typing, and PC Webcam Simulation Mode.
+Supports both Tello Drone Mode and PC Webcam Simulation Mode.
 """
 
 import os
@@ -17,13 +17,11 @@ import threading
 try:
     from src.assistant.command_parser import parse_command
     from src.assistant.autonomous_tracker import AutonomousTracker
-    from src.assistant.voice_listener import VoiceListener
     from src.detection.real_time_object_detector import RealTimeObjectDetector
     from src.drone.tello import Tello
 except ImportError:
     from command_parser import parse_command
     from autonomous_tracker import AutonomousTracker
-    from voice_listener import VoiceListener
     from real_time_object_detector import RealTimeObjectDetector
     from tello import Tello
 
@@ -32,9 +30,12 @@ latest_frame = None
 keep_running = True
 drone = None
 use_webcam = False
-input_mode = "text"  # "text" or "voice"
 
 def draw_assistant_hud(frame, hud_info, current_detections):
+    """
+    Draws a visual HUD on the camera stream with targeting crosshair,
+    tracking vector, object area gauge, and mission log.
+    """
     if frame is None:
         return None
 
@@ -48,8 +49,7 @@ def draw_assistant_hud(frame, hud_info, current_detections):
     target_str = hud_info.get('target', 'None')
     msg_str = hud_info.get('msg', '')
 
-    mode_label = "VOICE MIC MODE" if input_mode == "voice" else "TERMINAL TEXT MODE"
-    cv2.putText(hud, f"TELLO AI VISION ASSISTANT ({mode_label})", (15, 20),
+    cv2.putText(hud, "TELLO AI VISION ASSISTANT", (15, 20),
                 cv2.FONT_HERSHEY_SIMPLEX, 0.45, (200, 200, 200), 1)
     
     color = (0, 255, 0) if state_str == 'REACHED' else (0, 215, 255) if state_str == 'TRACKING' else (200, 200, 200)
@@ -66,8 +66,13 @@ def draw_assistant_hud(frame, hud_info, current_detections):
         cx = int(width / 2.0)
         cy = int(height / 2.0)
 
+        # Draw Target Box Highlight
         cv2.rectangle(hud, (x1, y1), (x2, y2), (0, 255, 0), 2)
+        
+        # Draw Vector Arrow from frame center to target center
         cv2.arrowedLine(hud, (cx, cy), (bx, by), (0, 255, 255), 2, tipLength=0.2)
+        
+        # Crosshair at target center
         cv2.circle(hud, (bx, by), 6, (0, 255, 0), -1)
 
     # Center Frame Crosshair
@@ -77,65 +82,10 @@ def draw_assistant_hud(frame, hud_info, current_detections):
 
     # Bottom Instructions Bar
     cv2.rectangle(hud, (0, height - 25), (width, height), (15, 15, 15), -1)
-    bottom_txt = "Voice Mode Active: Speak commands into mic" if input_mode == "voice" else "Terminal Typing Active: Type commands in terminal"
-    cv2.putText(hud, f"{bottom_txt} | Press ESC to quit.",
+    cv2.putText(hud, "Terminal Chat Active. Type commands in terminal (e.g. 'go to a ball and hover'). Press ESC to quit.",
                 (10, height - 8), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255, 255, 255), 1)
 
     return hud
-
-def execute_parsed_command(parsed, tracker, drone_inst):
-    target = parsed['target']
-    action = parsed['action']
-    raw = parsed['raw_text']
-
-    print(f"\n[AI Assistant] Processing instruction: \"{raw}\"")
-    print(f"               --> Target: '{target}', Action: '{action}'")
-
-    if action == 'TAKEOFF':
-        if drone_inst:
-            print(">> Launching takeoff...")
-            drone_inst.send_command('takeoff')
-        else:
-            print(">> [SIMULATION] Takeoff executed.")
-
-    elif action == 'LAND_IMMEDIATE':
-        if drone_inst:
-            print(">> Landing drone...")
-            drone_inst.send_command('land')
-        else:
-            print(">> [SIMULATION] Landing executed.")
-
-    elif action == 'UNKNOWN' or (target is None and action not in ['TAKEOFF', 'LAND_IMMEDIATE']):
-        print("!! AI Assistant: I couldn't recognize a target object in your request.")
-        print("   Available objects: ball, computer/laptop, bottle, cup, phone, chair, book, etc.")
-
-    else:
-        tracker.set_mission(target, action)
-        print(f"[AI Assistant] Mission set! Navigating to '{target}' to execute '{action}'...")
-
-def voice_command_thread(tracker, drone_inst):
-    global keep_running
-    listener = VoiceListener()
-    if not listener.available:
-        print("!! Voice recognition not available. Falling back to terminal text input.")
-        terminal_chat_thread(tracker, drone_inst)
-        return
-
-    print("\n=======================================================")
-    print("       VOICE-CONTROLLED DRONE ASSISTANT ONLINE         ")
-    print("=======================================================")
-    print("Speak natural instructions into your microphone. Examples:")
-    print("  - \"go to a ball and hover above it\"")
-    print("  - \"once you go to a computer, land\"")
-    print("  - \"find a bottle and hover\"")
-    print("  - \"takeoff\" / \"land\"")
-    print("=======================================================\n")
-
-    while keep_running:
-        spoken_text = listener.listen_for_command(timeout=4, phrase_time_limit=6)
-        if spoken_text:
-            parsed = parse_command(spoken_text)
-            execute_parsed_command(parsed, tracker, drone_inst)
 
 def terminal_chat_thread(tracker, drone_inst):
     global keep_running
@@ -157,7 +107,33 @@ def terminal_chat_thread(tracker, drone_inst):
                 continue
 
             parsed = parse_command(user_input)
-            execute_parsed_command(parsed, tracker, drone_inst)
+            target = parsed['target']
+            action = parsed['action']
+
+            print(f"[AI Assistant] Received instruction: '{user_input}'")
+            print(f"               --> Parsed Intent: Target='{target}', Action='{action}'")
+
+            if action == 'TAKEOFF':
+                if drone_inst:
+                    print(">> Launching takeoff...")
+                    drone_inst.send_command('takeoff')
+                else:
+                    print(">> [SIMULATION] Takeoff executed.")
+
+            elif action == 'LAND_IMMEDIATE':
+                if drone_inst:
+                    print(">> Landing drone...")
+                    drone_inst.send_command('land')
+                else:
+                    print(">> [SIMULATION] Landing executed.")
+
+            elif action == 'UNKNOWN' or (target is None and action not in ['TAKEOFF', 'LAND_IMMEDIATE']):
+                print("!! AI Assistant: I couldn't recognize a target object in your request.")
+                print("   Available objects: ball, computer/laptop, bottle, cup, phone, chair, book, etc.")
+
+            else:
+                tracker.set_mission(target, action)
+                print(f"[AI Assistant] Mission set! Navigating to '{target}' to execute '{action}'...")
 
         except (EOFError, KeyboardInterrupt):
             break
@@ -197,20 +173,11 @@ def video_stream_loop(video_source, detector, tracker, drone_inst):
     cap.release()
     cv2.destroyAllWindows()
 
-def main(mode=None):
-    global drone, use_webcam, keep_running, input_mode
+def main():
+    global drone, use_webcam, keep_running
     
     print("=== Launching Tello Vision-Guided Assistant ===")
-
-    if mode is None:
-        print("\nSelect Control Mode:")
-        print("  [1] Voice Microphone Commands (Speak instructions)")
-        print("  [2] Terminal Text Commands (Type instructions)")
-        choice = input("Enter choice [1/2] (Default=1) > ").strip()
-        input_mode = "voice" if choice != '2' else "text"
-    else:
-        input_mode = mode
-
+    
     detector = RealTimeObjectDetector(confidence_threshold=0.40)
     tracker = AutonomousTracker()
 
@@ -230,9 +197,7 @@ def main(mode=None):
         use_webcam = True
         video_source = 0
 
-    # Start selected input thread (Voice or Terminal Text)
-    target_thread_fn = voice_command_thread if input_mode == "voice" else terminal_chat_thread
-    c_thread = threading.Thread(target=target_thread_fn, args=(tracker, drone))
+    c_thread = threading.Thread(target=terminal_chat_thread, args=(tracker, drone))
     c_thread.daemon = True
     c_thread.start()
 
